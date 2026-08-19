@@ -2,18 +2,28 @@ const express = require("express");
 const connectDatabase = require("./config/db");
 
 const app = express();
-const port = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", require("./routes/api"));
+let databaseReady = false;
+let databasePromise = null;
 
-async function startServer() {
-    await connectDatabase();
-    app.listen(port, () => {
-        console.log(`Server is running on http://localhost:${port}`);
-    });
-}
+app.use((req, res, next) => {
+    try{
+        if (!databaseReady) {
+            if (!databasePromise) {
+                databasePromise = connectDatabase();
+            }
 
-startServer();
+            await databasePromise;
+            databaseReady = true;
+        }
+
+        next();
+    } catch (error) {
+        console.error("Database initialization failed:", error.message);
+
+        databasePromise = null;
+    }
+});
