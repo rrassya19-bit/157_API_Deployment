@@ -9,25 +9,21 @@ app.use(express.urlencoded({ extended: true }));
 let databaseReady = false;
 let databasePromise = null;
 
-app.use((req, res, next) => {
-    try{
+app.use(async (req, res, next) => {
+    try {
         if (!databaseReady) {
-            if (!databasePromise) {
-                databasePromise = connectDatabase();
-            }
-
-            await databasePromise;
-            databaseReady = true;
+        if (!databasePromise) {
+            databasePromise = connectDatabase();
         }
-
+        await databasePromise;
+        databaseReady = true;
+    }
         next();
     } catch (error) {
         console.error("Database initialization failed:", error.message);
-
         databasePromise = null;
-
-        return res.status(500).json({ 
-            message: "Database initialization failed" 
+        return res.status(500).json({
+        message: "Database initialization failed."
         });
     }
 });
